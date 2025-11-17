@@ -14,10 +14,13 @@ model.load_state_dict(torch.load(model_path, weights_only=False))
 model.eval()
 
 # --- Image Preprocessing ---
+# Note: MNIST mean=0.1307, std=0.3081 (from standard MNIST dataset)
 transform = transforms.Compose([
-    transforms.Grayscale(),
+    transforms.Grayscale(num_output_channels=1),
     transforms.Resize((28, 28)),
-    transforms.ToTensor()
+    transforms.ToTensor(),
+    # Normalize using MNIST statistics for better accuracy
+    transforms.Normalize(mean=(0.1307,), std=(0.3081,))
 ])
 
 # --- FastAPI App ---
@@ -39,10 +42,26 @@ app.add_middleware(
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents)).convert('L')  # Convert to grayscale
-    img = transform(img)
-    with torch.no_grad():
-        output = model(img.unsqueeze(0))
-        pred = output.argmax(dim=1).item()
-    return {"prediction": pred}
+    try:
+        contents = await file.read()
+        # Open image and ensure it's in RGB mode first, then convert to grayscale
+        img = Image.open(io.BytesIO(contents)).convert('RGB')
+        # Convert RGB to grayscale (this ensures consistent conversion)
+        img = img.convert('L')
+        # Apply transforms
+        img_tensor = transform(img)
+        # Predict
+        with torch.no_grad():
+            output = model(img_tensor.unsqueeze(0))
+            pred = output.argmax(dim=1).item()
+            # Get confidence score
+            confidence = torch.softmax(output, dim=1)[0][pred].item()
+        return {
+            "prediction": pred,
+            "confidence": round(confidence, 4)
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "prediction": None
+        }
