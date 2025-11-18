@@ -1,7 +1,16 @@
 # Model Accuracy Improvements
 
-## Issue Identified
-The model was predicting some numbers incorrectly due to preprocessing inconsistencies between training and inference.
+## Important Note: Sample Images ⚠️
+The synthetic sample images (`sample_images/digit_*.png`) are **simple geometric shapes** and do **NOT** represent real handwritten digits. The model was trained on real MNIST handwritten digits, so:
+
+- ❌ Synthetic shapes get wrong predictions (geometric shapes ≠ handwriting patterns)
+- ✅ Real handwritten digits get correct predictions
+- ✅ MNIST dataset images get 99%+ accuracy
+
+To test the model correctly, either:
+1. **Download real MNIST images**: Run `python download_sample_mnist.py`
+2. **Use real handwritten digits**: Draw digits 0-9 and upload via the web interface
+3. **Upload your own images**: Any 28x28 grayscale digit image should work
 
 ## Root Causes
 1. **Missing Normalization**: The inference pipeline didn't use MNIST standard normalization

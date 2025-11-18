@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Projects</title>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; margin:0; background:#f6f7fb; }
+      .container { max-width:1100px; margin:24px auto; padding:20px; }
+      .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
+      .card { background:#fff; border-radius:12px; padding:18px; box-shadow:0 6px 24px rgba(20,20,40,0.08); }
+      .project-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+      .project-desc { color:#6b7280; font-size:14px; margin-bottom:12px }
+      .tech { font-size:12px; color:#374151; margin-bottom:12px }
+      .links { display:flex; gap:8px }
+      .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600; text-decoration:none; }
+      .btn-primary { background:#4f46e5; color:#fff; }
+      .btn-ghost { background:#f3f4f6; color:#111827; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Projects</h1>
+      <div class="grid">
+        <div class="card">
+          <div class="project-title">MNIST Digit Classifier</div>
+          <div class="project-desc">Full-stack ML demo: upload a handwritten digit and the model predicts it in real-time.</div>
+          <div class="tech">React, FastAPI, PyTorch</div>
+          <div class="links">
+            <a class="btn btn-primary" href="/mnist-demo/">Live Demo</a>
+            <a class="btn btn-ghost" href="https://github.com/geniusaveed/image-classification" target="_blank" rel="noopener">Source</a>
+          </div>
+        </div>
+        <!-- Add other project cards here -->
+      </div>
+    </div>
+  </body>
+</html>

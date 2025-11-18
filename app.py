@@ -14,19 +14,20 @@ model.load_state_dict(torch.load(model_path, weights_only=False))
 model.eval()
 
 # --- Image Preprocessing ---
-# Note: MNIST mean=0.1307, std=0.3081 (from standard MNIST dataset)
+# Note: Must match training preprocessing exactly!
+# Training used only ToTensor (no normalization)
 transform = transforms.Compose([
     transforms.Grayscale(num_output_channels=1),
     transforms.Resize((28, 28)),
-    transforms.ToTensor(),
-    # Normalize using MNIST statistics for better accuracy
-    transforms.Normalize(mean=(0.1307,), std=(0.3081,))
+    transforms.ToTensor()
+    # DO NOT ADD NORMALIZATION - model was trained WITHOUT it
 ])
 
 # --- FastAPI App ---
 app = FastAPI()
 
-# Allow frontend to call this API (running on 127.0.0.1:3000)
+# Allow frontend to call this API
+# Add your Hostinger domain here
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -34,6 +35,10 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "https://yourdomain.com",  # Replace with your Hostinger domain
+        "https://www.yourdomain.com",
+        "http://yourdomain.com",
+        "http://www.yourdomain.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],

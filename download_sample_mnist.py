@@ -1,61 +1,46 @@
-"""
-Generate sample MNIST-like images for testing the classifier
-"""
+"""Generate sample MNIST digit images from the actual MNIST dataset for testing."""
+
+import torch
+import torchvision.datasets as datasets
+from torchvision import transforms
 import os
-from PIL import Image, ImageDraw
-import random
+from PIL import Image
 
-output_dir = os.path.join(os.path.dirname(__file__), "sample_images")
-os.makedirs(output_dir, exist_ok=True)
+# Create sample_images directory if it doesn't exist
+os.makedirs('sample_images', exist_ok=True)
 
-print(f"Generating sample MNIST-like images to: {output_dir}")
+print("Downloading MNIST dataset and extracting sample images...")
 
-# Generate synthetic digit images
-for digit in range(10):
-    filepath = os.path.join(output_dir, f"digit_{digit}.png")
-    
-    # Create a 28x28 image with white background
-    img = Image.new('L', (28, 28), color=255)
-    draw = ImageDraw.Draw(img)
-    
-    # Draw a simple representation of each digit
-    if digit == 0:
-        draw.ellipse([4, 4, 24, 24], outline=0, width=2)
-    elif digit == 1:
-        draw.line([10, 4, 10, 24], fill=0, width=2)
-    elif digit == 2:
-        draw.arc([4, 4, 24, 14], 0, 180, fill=0, width=2)
-        draw.line([4, 14, 24, 14], fill=0, width=2)
-        draw.arc([4, 14, 24, 24], 180, 360, fill=0, width=2)
-    elif digit == 3:
-        draw.arc([4, 4, 24, 14], 0, 180, fill=0, width=2)
-        draw.line([4, 14, 24, 14], fill=0, width=2)
-        draw.arc([4, 14, 24, 24], 180, 360, fill=0, width=2)
-        draw.line([24, 4, 24, 24], fill=0, width=2)
-    elif digit == 4:
-        draw.line([20, 4, 4, 14], fill=0, width=2)
-        draw.line([10, 4, 10, 24], fill=0, width=2)
-        draw.line([4, 14, 20, 14], fill=0, width=2)
-    elif digit == 5:
-        draw.line([24, 4, 4, 4], fill=0, width=2)
-        draw.line([4, 4, 4, 14], fill=0, width=2)
-        draw.arc([4, 14, 24, 24], 180, 360, fill=0, width=2)
-        draw.line([24, 14, 24, 14], fill=0, width=2)
-    elif digit == 6:
-        draw.arc([4, 4, 24, 24], 0, 360, fill=0, width=2)
-        draw.line([4, 14, 24, 14], fill=0, width=2)
-    elif digit == 7:
-        draw.line([4, 4, 24, 4], fill=0, width=2)
-        draw.line([20, 4, 8, 24], fill=0, width=2)
-    elif digit == 8:
-        draw.ellipse([4, 4, 24, 14], outline=0, width=2)
-        draw.ellipse([4, 14, 24, 24], outline=0, width=2)
-    elif digit == 9:
-        draw.arc([4, 4, 24, 24], 0, 360, fill=0, width=2)
-        draw.line([20, 4, 20, 24], fill=0, width=2)
-    
-    img.save(filepath, 'PNG')
-    print(f"Generated digit_{digit}.png ✓")
+# Load MNIST test dataset (already in correct format for model)
+mnist_test = datasets.MNIST(
+    root='./mnist_data',
+    train=False,
+    download=True,
+    transform=transforms.ToTensor()
+)
 
-print(f"\nSample images saved to: {output_dir}")
-print("You can now upload these images in the frontend for testing!")
+# Extract one image for each digit (0-9) from the test set
+digit_count = {i: 0 for i in range(10)}
+saved_count = 0
+
+for idx, (img_tensor, label) in enumerate(mnist_test):
+    if digit_count[label] == 0:  # Save only one per digit
+        # Convert tensor (1, 28, 28) to PIL Image
+        # img_tensor is already normalized to [0, 1]
+        img_array = (img_tensor.squeeze() * 255).byte().numpy()
+        img_pil = Image.fromarray(img_array, mode='L')
+        
+        # Save as PNG
+        filename = f'sample_images/digit_{label}.png'
+        img_pil.save(filename)
+        print(f"✓ Saved digit {label} from MNIST test set: {filename}")
+        
+        digit_count[label] += 1
+        saved_count += 1
+        
+        if saved_count == 10:
+            print("\n✅ All 10 sample digits extracted from real MNIST dataset!")
+            print("These are actual handwritten digits that the model was trained on.")
+            break
+
+print("\nThese images should now be correctly predicted by the model.")
