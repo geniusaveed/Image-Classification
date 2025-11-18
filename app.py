@@ -14,20 +14,16 @@ model.load_state_dict(torch.load(model_path, weights_only=False))
 model.eval()
 
 # --- Image Preprocessing ---
-# Note: Must match training preprocessing exactly!
-# Training used only ToTensor (no normalization)
 transform = transforms.Compose([
-    transforms.Grayscale(num_output_channels=1),
+    transforms.Grayscale(),
     transforms.Resize((28, 28)),
     transforms.ToTensor()
-    # DO NOT ADD NORMALIZATION - model was trained WITHOUT it
 ])
 
 # --- FastAPI App ---
 app = FastAPI()
 
-# Allow frontend to call this API
-# Add your Hostinger domain here
+# Allow frontend to call this API (running on 127.0.0.1:3000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -35,10 +31,6 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
-        "https://yourdomain.com",  # Replace with your Hostinger domain
-        "https://www.yourdomain.com",
-        "http://yourdomain.com",
-        "http://www.yourdomain.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -47,26 +39,10 @@ app.add_middleware(
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    try:
-        contents = await file.read()
-        # Open image and ensure it's in RGB mode first, then convert to grayscale
-        img = Image.open(io.BytesIO(contents)).convert('RGB')
-        # Convert RGB to grayscale (this ensures consistent conversion)
-        img = img.convert('L')
-        # Apply transforms
-        img_tensor = transform(img)
-        # Predict
-        with torch.no_grad():
-            output = model(img_tensor.unsqueeze(0))
-            pred = output.argmax(dim=1).item()
-            # Get confidence score
-            confidence = torch.softmax(output, dim=1)[0][pred].item()
-        return {
-            "prediction": pred,
-            "confidence": round(confidence, 4)
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "prediction": None
-        }
+    contents = await file.read()
+    img = Image.open(io.BytesIO(contents)).convert('L')  # Convert to grayscale
+    img = transform(img)
+    with torch.no_grad():
+        output = model(img.unsqueeze(0))
+        pred = output.argmax(dim=1).item()
+    return {"prediction": pred}
