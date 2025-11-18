@@ -23,7 +23,7 @@ transform = transforms.Compose([
 # --- FastAPI App ---
 app = FastAPI()
 
-# Allow frontend to call this API (running on 127.0.0.1:3000)
+# Allow frontend to call this API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -31,6 +31,10 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "https://aveedali.com",
+        "https://www.aveedali.com",
+        "http://aveedali.com",
+        "http://www.aveedali.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -39,10 +43,21 @@ app.add_middleware(
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents)).convert('L')  # Convert to grayscale
-    img = transform(img)
-    with torch.no_grad():
-        output = model(img.unsqueeze(0))
-        pred = output.argmax(dim=1).item()
-    return {"prediction": pred}
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert('RGB')
+        img = img.convert('L')  # Convert to grayscale
+        img_tensor = transform(img)
+        with torch.no_grad():
+            output = model(img_tensor.unsqueeze(0))
+            pred = output.argmax(dim=1).item()
+            confidence = torch.softmax(output, dim=1)[0][pred].item()
+        return {
+            "prediction": pred,
+            "confidence": round(confidence, 4)
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "prediction": None
+        }
